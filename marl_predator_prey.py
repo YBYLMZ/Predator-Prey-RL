@@ -15,14 +15,14 @@ font = {'family': 'sans-serif',
         'size': 14}
 
 
-class QuadrotorFormation(gym.Env):
+class QuadrotorFormationMARL(gym.Env):
 
-    def __init__(self, n_agents=1, n_bots=0,
-                 n_tank_agents=0, n_tank_bots=1,
+    def __init__(self, n_agents=1, n_bots=4,
+                 n_tank_agents=1, n_tank_bots=4,
                  N_frame=5, visualization=True,
                  is_centralized=False, moving_target=True):
 
-        super(QuadrotorFormation, self).__init__()
+        super(QuadrotorFormationMARL, self).__init__()
 
         self.current_step = 0
         self.max_drone_agents = 10  # changes the observation matrix
@@ -67,11 +67,21 @@ class QuadrotorFormation(gym.Env):
         self.viewer = None
         self.dtau = 1e-3
 
-        if self.is_centralized:
+        if self.n_tank_agents > 1:
+            print("WARNING, CENTRALIZED TRAINING CANT HAVE MORE THAN 1 AGENT")
+            self.n_tank_agents = 1
+        if self.n_agents > 1:
+            print("WARNING, CENTRALIZED TRAINING CANT HAVE MORE THAN 1 AGENT")
+            self.n_agents = 1
+
+        """
+
+        """
+
+        # 4*tank + 6*drone
+        if True:
             self.action_space = spaces.Discrete(
-                self.n_action**(self.n_agents+n_tank_agents))
-        else:
-            self.action_space = spaces.Discrete(self.n_action)
+                (4*self.n_tank_agents) * (6*self.n_agents))
 
         # intitialize grid information
         self.x_lim = 40  # grid x limit
@@ -109,6 +119,9 @@ class QuadrotorFormation(gym.Env):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
 
+    # // 6 -> tank move
+    # divmod(scaler, )
+
     def step(self, action):
         if True:
             iteration = None
@@ -138,11 +151,7 @@ class QuadrotorFormation(gym.Env):
         reward_list = np.ones(self.n_agents) * (-1)
         tank_reward_list = np.ones(self.n_tank_agents) * (-1)
 
-        if type(action) == np.int64:
-            action = list((action, ))
-
-        action_1 = action[:self.n_agents]
-        tank_action = action[self.n_agents:]
+        tank_action, action_1 = divmod(action, 6)
 
         if is_centralized:
             agents_actions = self.action_list[action_1]

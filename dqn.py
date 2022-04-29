@@ -9,10 +9,14 @@ from stable_baselines3.common.callbacks import CheckpointCallback
 from stable_baselines3.common.env_checker import check_env
 
 from predator_prey import QuadrotorFormation
+from marl_predator_prey import QuadrotorFormationMARL
+
+
+QuadrotorFormation = QuadrotorFormationMARL
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
-TOTAL_TIMESTEPS = 10000
+TOTAL_TIMESTEPS = 100000
 CHECKPOINT_FREQ = 25000
 N_ENV = 8
 
@@ -33,8 +37,6 @@ if __name__ == '__main__':
     env = QuadrotorFormation(
         n_tank_bots=1, visualization=False, moving_target=True, n_bots=4)
 
-    env = [make_env() for i in range(4)]
-
     model = PPO("MlpPolicy", env, verbose=1,
                 tensorboard_log='./tensorboard_logs/', batch_size=256)
     model.learn(total_timesteps=25_000, log_interval=4,
@@ -54,6 +56,7 @@ if __name__ == '__main__':
 
     env = QuadrotorFormation(
         n_tank_bots=1, visualization=False, moving_target=True, n_bots=4)
+    env.reset()
 
     i = 0
     while i < 100:
@@ -74,19 +77,21 @@ if __name__ == '__main__':
             i += 1
             time.sleep(0.5)
 
+        # dıron
         x, y, z = obs[0, ...]
         ax.scatter(x, y, z, color='black')
-        x, y, z = obs[30, ...]
-        ax.scatter(x, y, z, color='red')
 
-        x, y, z = obs[20, ...]
-        ax.scatter(x, y, z, color='blue')
-        x, y, z = obs[21, ...]
-        ax.scatter(x, y, z, color='blue')
-        x, y, z = obs[22, ...]
-        ax.scatter(x, y, z, color='blue')
-        x, y, z = obs[23, ...]
-        ax.scatter(x, y, z, color='blue')
+        # tenk
+        x, y, z = obs[10, ...]
+        ax.scatter(x, y, z, color='orange')
+
+        for i in range(env.n_tank_bots):
+            x, y, z = obs[30+i, ...]
+            ax.scatter(x, y, z, color='red')
+
+        for i in range(env.n_bots):
+            x, y, z = obs[20+i, ...]
+            ax.scatter(x, y, z, color='blue')
 
         ax.scatter(40, 40, 12, color='white')
         ax.scatter(0, 0, 0, color='white')
