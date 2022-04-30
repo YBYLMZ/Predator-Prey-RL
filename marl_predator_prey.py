@@ -312,9 +312,9 @@ class QuadrotorFormationMARL(gym.Env):
             reward_list -= 100
 
         self.current_step += 1
-
+        rewarrd = reward_list[0]+tank_reward_list[0]
         return (self.get_observation(),
-                reward_list[0],
+                rewarrd,
                 done,
                 {})
 
