@@ -14,10 +14,10 @@ from marl_predator_prey import QuadrotorFormationMARL
 
 QuadrotorFormation = QuadrotorFormationMARL
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+# os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
-TOTAL_TIMESTEPS = 100000
-CHECKPOINT_FREQ = 25000
+TOTAL_TIMESTEPS = 1_000_000
+CHECKPOINT_FREQ = 50_000
 N_ENV = 8
 
 
@@ -37,11 +37,15 @@ if __name__ == '__main__':
     env = QuadrotorFormation(
         n_tank_bots=1, visualization=False, moving_target=True, n_bots=4)
 
-    model = PPO("MlpPolicy", env, verbose=1,
-                tensorboard_log='./tensorboard_logs/', batch_size=256)
-    model.learn(total_timesteps=25_000, log_interval=4,
-                tb_log_name="dqn_second", callback=checkpoint_callback)
-    model.save("dqn_predator2")
+    model = DQN("MlpPolicy", env,
+                tensorboard_log='./tensorboard_logs/', batch_size=256,
+                exploration_fraction=0.95,
+                verbose=2, policy_kwargs={"net_arch":[512, 512, 512]})
+    
+    
+    model.learn(total_timesteps=TOTAL_TIMESTEPS, log_interval=5,
+                tb_log_name="dqn_log", callback=checkpoint_callback)
+    model.save("dqn_predator")
 
     obs = env.reset()
     total_rew = 0
@@ -58,7 +62,7 @@ if __name__ == '__main__':
         n_tank_bots=1, visualization=False, moving_target=True, n_bots=4)
     env.reset()
 
-    i = 0
+    i = 100
     while i < 100:
         plt.cla()
 
