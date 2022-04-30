@@ -29,24 +29,28 @@ class QuadrotorFormation(gym.Env):
         self.max_tank_agents = 10  # changes the observation matrix
         self.max_drone_bots = 10  # changes the observation matrix
         self.max_tank_bots = 10  # changes the observation matrix
+
         self.seed()
+
         self.n_action = 6
+
         self.observation_dim = 4
         self.dim_actions = 1
         self.n_agents = n_agents
         self.n_bots = n_bots
+        #.#########Speed of Agents and Bots#############
         self.tank_speed = 1
         self.drone_speed = 2
         self.tank_bot_speed = 1
         self.drone_bot_speed = 2
-        #################editedlines###########################
+
         self.n_tank_agents = n_tank_agents
         self.n_tank_bots = n_tank_bots
         #####################obstacles####################
         self.dynamic_obstacles = True
         self.obstacle_movedirection = [1, 2, 4]
         self.obstacle_vel = 1
-        ################editedlinesarefinished#################
+
         self.visualization = visualization
         self.is_centralized = is_centralized
         self.moving_target = moving_target
@@ -54,7 +58,7 @@ class QuadrotorFormation(gym.Env):
 
         self.quadrotors = []
         self.obstacle_point = []
-        #################################Obstacles#########################
+        #.##########################  Dynamic and Static Obstacle Points #########################
 
         self.obstacle_points = np.array(
             [[26, 5, 1, 37, 10, 4], [12, 5, 3, 15, 6, 5], [11, 2, 1, 13, 6, 8]])
@@ -73,10 +77,11 @@ class QuadrotorFormation(gym.Env):
         else:
             self.action_space = spaces.Discrete(self.n_action)
 
-        # intitialize grid information
+        ##################### Grid Limits#################################
         self.x_lim = 40  # grid x limit
         self.y_lim = 40  # grid y limit
-        self.z_lim = 12
+        self.z_lim = 12  # grid z limit
+
         self.uncertainty_grid = np.ones((self.x_lim, self.y_lim, self.z_lim))
         self.obs_shape = self.x_lim * self.y_lim * self.z_lim + \
             (self.max_drone_agents + self.max_tank_agents +
@@ -138,9 +143,7 @@ class QuadrotorFormation(gym.Env):
         reward_list = np.ones(self.n_agents) * (-1)
         tank_reward_list = np.ones(self.n_tank_agents) * (-1)
 
-        if type(action) == np.int64:
-            action = list((action, ))
-
+        action = [action]
         action_1 = action[:self.n_agents]
         tank_action = action[self.n_agents:]
 
@@ -279,8 +282,8 @@ class QuadrotorFormation(gym.Env):
             mox, moy, moz, ox, oy, oz = obstacle
             cubic_env[mox:ox][moy:oy][moz:oz] = 1
 
-        # .####################### uncertainty_grids##################################3
-        self.uncertainty_grid += 0.01
+        # .####################### uncertainty grids ##################################3
+        self.uncertainty_grid += 0.1
         self.uncertainty_grid = np.clip(self.uncertainty_grid, 0, 1)
         for agent_ind in range(self.n_agents):
             self.uncertainty_grid[self.quadrotors[agent_ind].state[0]
@@ -302,10 +305,12 @@ class QuadrotorFormation(gym.Env):
             done = True
             reward_list -= 100
 
+        reward = np.concatenate((reward_list, tank_reward_list))
+
         self.current_step += 1
 
         return (self.get_observation(),
-                reward_list[0],
+                reward,
                 done,
                 {})
 
@@ -682,7 +687,6 @@ class QuadrotorFormation(gym.Env):
 
         drone_current_state = np.copy(self.quadrotors[drone_index].state)
         return drone_current_state
-        #############################################editedlines#################################
 
     def get_tank_des_grid(self, drone_index, discrete_action):
 
