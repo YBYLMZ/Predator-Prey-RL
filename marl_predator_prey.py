@@ -20,10 +20,10 @@ class QuadrotorFormationMARL(gym.Env):
     def __init__(self, n_agents=1, n_bots=4,
                  n_tank_agents=1, n_tank_bots=4,
                  N_frame=5, visualization=True,
-                 is_centralized=False, moving_target=True):
+                 is_centralized=False, moving_target=True, exploration_learning=False):
 
         super(QuadrotorFormationMARL, self).__init__()
-
+        self. exploration_learning = exploration_learning
         self.current_step = 0
         self.max_drone_agents = 10  # changes the observation matrix
         self.max_tank_agents = 10  # changes the observation matrix
@@ -289,7 +289,7 @@ class QuadrotorFormationMARL(gym.Env):
             cubic_env[mox:ox][moy:oy][moz:oz] = 1
 
         # .####################### uncertainty_grids##################################3
-        self.uncertainty_grid += 0.01
+        self.uncertainty_grid += 0.1
         self.uncertainty_grid = np.clip(self.uncertainty_grid, 0, 1)
         for agent_ind in range(self.n_agents):
             self.uncertainty_grid[self.quadrotors[agent_ind].state[0]
@@ -311,8 +311,14 @@ class QuadrotorFormationMARL(gym.Env):
             done = True
             reward_list -= 100
 
+        if self.exploration_learning == False:
+            rewarrd = reward_list[0]+tank_reward_list[0]
+        else:
+            reward = np.sum(self.uncertainty_grid)
+            rewarrd = -reward
+
         self.current_step += 1
-        rewarrd = reward_list[0]+tank_reward_list[0]
+
         return (self.get_observation(),
                 rewarrd,
                 done,
