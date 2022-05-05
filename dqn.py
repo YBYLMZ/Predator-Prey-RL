@@ -19,6 +19,7 @@ QuadrotorFormation = QuadrotorFormationMARL
 TOTAL_TIMESTEPS = 1_000_000
 CHECKPOINT_FREQ = 50_000
 N_ENV = 8
+DEMO = False
 
 
 def make_env():
@@ -34,15 +35,13 @@ if __name__ == '__main__':
     checkpoint_callback = CheckpointCallback(save_freq=CHECKPOINT_FREQ, save_path='./model_checkpoints/',
                                              name_prefix='rl_model')
 
-    env = QuadrotorFormation(
-        n_tank_bots=1, visualization=False, moving_target=True, n_bots=4)
+    env = QuadrotorFormation(visualization=False, moving_target=True)
 
     model = DQN("MlpPolicy", env,
-                tensorboard_log='./tensorboard_logs/', batch_size=256,
-                exploration_fraction=0.95,
-                verbose=2, policy_kwargs={"net_arch":[512, 512, 512]})
-    
-    
+                tensorboard_log='./tensorboard_logs/', batch_size=32,
+                exploration_fraction=0.99,
+                verbose=2, policy_kwargs={"net_arch": [512, 512]})
+
     model.learn(total_timesteps=TOTAL_TIMESTEPS, log_interval=5,
                 tb_log_name="dqn_log", callback=checkpoint_callback)
     model.save("dqn_predator")
@@ -62,45 +61,45 @@ if __name__ == '__main__':
         n_tank_bots=1, visualization=False, moving_target=True, n_bots=4)
     env.reset()
 
-    i = 100
-    while i < 100:
-        plt.cla()
+    if DEMO:
+        i = 0
+        while i < 100:
+            plt.cla()
 
-        action, _states = model.predict(obs, deterministic=False)
-        obs, rew, done, info = env.step(action)
+            action, _states = model.predict(obs, deterministic=False)
+            obs, rew, done, info = env.step(action)
 
-        total_rew += rew
-        rews.append(rew)
+            total_rew += rew
+            rews.append(rew)
 
-        # env.renqder()
-        if done:
-            obs = env.reset()
-            total_rew = 0
-            rews = []
+            if done:
+                obs = env.reset()
+                total_rew = 0
+                rews = []
 
-            i += 1
-            time.sleep(0.5)
+                i += 1
+                time.sleep(0.5)
 
-        # dıron
-        x, y, z = obs[0, ...]
-        ax.scatter(x, y, z, color='black')
+            # dıron
+            x, y, z = obs[0, ...]
+            ax.scatter(x, y, z, color='black')
 
-        # tenk
-        x, y, z = obs[10, ...]
-        ax.scatter(x, y, z, color='orange')
+            # tenk
+            x, y, z = obs[10, ...]
+            ax.scatter(x, y, z, color='orange')
 
-        for i in range(env.n_tank_bots):
-            x, y, z = obs[30+i, ...]
-            ax.scatter(x, y, z, color='red')
+            for i in range(env.n_tank_bots):
+                x, y, z = obs[30+i, ...]
+                ax.scatter(x, y, z, color='red')
 
-        for i in range(env.n_bots):
-            x, y, z = obs[20+i, ...]
-            ax.scatter(x, y, z, color='blue')
+            for i in range(env.n_bots):
+                x, y, z = obs[20+i, ...]
+                ax.scatter(x, y, z, color='blue')
 
-        ax.scatter(40, 40, 12, color='white')
-        ax.scatter(0, 0, 0, color='white')
+            ax.scatter(env.x_lim, env.y_lim, env.z_lim, color='white')
+            ax.scatter(0, 0, 0, color='white')
 
-        ax.scatter(20, 20, 12, color='white')
-        ax.scatter(0, 0, 0, color='white')
+            ax.scatter(env.x_lim/2, env.y_lim/2, env.z_lim, color='white')
+            ax.scatter(0, 0, 0, color='white')
 
-        plt.pause(0.05)
+            plt.pause(0.05)

@@ -17,8 +17,8 @@ font = {'family': 'sans-serif',
 
 class QuadrotorFormationMARL(gym.Env):
 
-    def __init__(self, n_agents=1, n_bots=4,
-                 n_tank_agents=1, n_tank_bots=4,
+    def __init__(self, n_agents=1, n_bots=2,
+                 n_tank_agents=1, n_tank_bots=2,
                  N_frame=5, visualization=True,
                  is_centralized=False, moving_target=True, exploration_learning=False):
 
@@ -84,9 +84,9 @@ class QuadrotorFormationMARL(gym.Env):
                 (4*self.n_tank_agents) * (6*self.n_agents))
 
         # intitialize grid information
-        self.x_lim = 40  # grid x limit
-        self.y_lim = 40  # grid y limit
-        self.z_lim = 12
+        self.x_lim = 12  # grid x limit
+        self.y_lim = 12  # grid y limit
+        self.z_lim = 6
         self.uncertainty_grid = np.ones((self.x_lim, self.y_lim, self.z_lim))
         self.obs_shape = self.x_lim * self.y_lim * self.z_lim + \
             (self.max_drone_agents + self.max_tank_agents +
@@ -104,6 +104,7 @@ class QuadrotorFormationMARL(gym.Env):
         X, Y, Z = np.mgrid[0: self.x_lim: self.grid_res,
                            0: self.y_lim: self.grid_res,
                            0:self.z_lim: self.grid_res]
+
         self.uncertainty_grids = np.vstack(
             (X.flatten(), Y.flatten(), Z.flatten())).T
 
@@ -118,9 +119,6 @@ class QuadrotorFormationMARL(gym.Env):
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
-
-    # // 6 -> tank move
-    # divmod(scaler, )
 
     def step(self, action):
         if True:
