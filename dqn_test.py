@@ -14,39 +14,20 @@ from marl_predator_prey import QuadrotorFormationMARL
 
 QuadrotorFormation = QuadrotorFormationMARL
 
-# os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
-TOTAL_TIMESTEPS = 5_000_000
-CHECKPOINT_FREQ = 50_000
-N_ENV = 8
-DEMO = False
+DEMO = True
 
-
-def make_env():
-    def _init():
-        env = QuadrotorFormation(
-            n_tank_bots=1, visualization=False, moving_target=True, n_bots=4, nenvs=N_ENV)
-        return env.state
-    return _init
 
 
 if __name__ == '__main__':
-    # callbacks
-    checkpoint_callback = CheckpointCallback(save_freq=CHECKPOINT_FREQ, save_path='./model_checkpoints/',
-                                             name_prefix='rl_model_dyno_')
-
-    env = QuadrotorFormation(visualization=False, moving_target=True)
+    env = QuadrotorFormation(visualization=False, moving_target=False)
+    obs = env.reset()
 
     model = DQN("MlpPolicy", env,
-                tensorboard_log='./tensorboard_logs_dyno/', batch_size=32,
-                exploration_fraction=0.99,
                 verbose=2, policy_kwargs={"net_arch": [512, 512]})
 
-    model.learn(total_timesteps=TOTAL_TIMESTEPS, log_interval=5,
-                tb_log_name="dqn_log_dyno", callback=checkpoint_callback)
-    model.save("dqn_predator_dyno")
+    model.load("dqn_predator_dyno")
 
-    obs = env.reset()
     total_rew = 0
     rews = []
 
@@ -57,9 +38,6 @@ if __name__ == '__main__':
     ax.set_ylim3d(0, 30)
     ax.set_zlim3d(0, 30)
 
-    env = QuadrotorFormation(
-        n_tank_bots=1, visualization=False, moving_target=True, n_bots=4)
-    env.reset()
 
     if DEMO:
         i = 0
@@ -102,4 +80,4 @@ if __name__ == '__main__':
             ax.scatter(env.x_lim/2, env.y_lim/2, env.z_lim, color='white')
             ax.scatter(0, 0, 0, color='white')
 
-            plt.pause(0.05)
+            plt.pause(0.01)

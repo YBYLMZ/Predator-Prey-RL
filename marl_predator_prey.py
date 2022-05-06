@@ -56,11 +56,11 @@ class QuadrotorFormationMARL(gym.Env):
         self.obstacle_point = []
         #################################Obstacles#########################
 
-        self.obstacle_points = np.array(
-            [[26, 5, 1, 37, 10, 4], [12, 5, 3, 15, 6, 5], [11, 2, 1, 13, 6, 8]])
-        self.static_obstacle_points = np.array(
-            [[26, 5, 1, 37, 10, 4], [12, 5, 3, 15, 6, 5], [11, 2, 1, 13, 6, 8]])
-
+        self.obstacle_points = np.array([[12, 5, 3, 15, 6, 5]])
+        #[[26, 5, 1, 37, 10, 4], [12, 5, 3, 15, 6, 5], [11, 2, 1, 13, 6, 8]])
+        self.static_obstacle_points = np.array([[26, 5, 1, 37, 10, 4]])
+        #[[26, 5, 1, 37, 10, 4], [12, 5, 3, 15, 6, 5], [11, 2, 1, 13, 6, 8]])
+        
         self.obstacle_indices = None
         self.obstacle_pos_xy = None
 
@@ -84,9 +84,9 @@ class QuadrotorFormationMARL(gym.Env):
                 (4*self.n_tank_agents) * (6*self.n_agents))
 
         # intitialize grid information
-        self.x_lim = 12  # grid x limit
-        self.y_lim = 12  # grid y limit
-        self.z_lim = 6
+        self.x_lim = 32  # grid x limit
+        self.y_lim = 32  # grid y limit
+        self.z_lim = 8
         self.uncertainty_grid = np.ones((self.x_lim, self.y_lim, self.z_lim))
         self.obs_shape = self.x_lim * self.y_lim * self.z_lim + \
             (self.max_drone_agents + self.max_tank_agents +
