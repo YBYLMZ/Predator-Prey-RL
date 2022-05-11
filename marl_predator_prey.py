@@ -17,8 +17,8 @@ font = {'family': 'sans-serif',
 
 class QuadrotorFormationMARL(gym.Env):
 
-    def __init__(self, n_agents=1, n_bots=2,
-                 n_tank_agents=1, n_tank_bots=2,
+    def __init__(self, n_agents=1, n_bots=4,
+                 n_tank_agents=0, n_tank_bots=4,
                  N_frame=5, visualization=True,
                  is_centralized=False, moving_target=True, exploration_learning=False):
 
@@ -56,11 +56,11 @@ class QuadrotorFormationMARL(gym.Env):
         self.obstacle_point = []
         #################################Obstacles#########################
 
-        self.obstacle_points = np.array([[12, 5, 3, 15, 6, 5]])
-        #[[26, 5, 1, 37, 10, 4], [12, 5, 3, 15, 6, 5], [11, 2, 1, 13, 6, 8]])
-        self.static_obstacle_points = np.array([[26, 5, 1, 37, 10, 4]])
-        #[[26, 5, 1, 37, 10, 4], [12, 5, 3, 15, 6, 5], [11, 2, 1, 13, 6, 8]])
-        
+        self.obstacle_points = np.array(
+            [[26, 5, 1, 37, 10, 4], [12, 5, 3, 15, 6, 5], [11, 2, 1, 13, 6, 8]])
+        self.static_obstacle_points = np.array(
+            [[26, 5, 1, 37, 10, 4], [12, 5, 3, 15, 6, 5], [11, 2, 1, 13, 6, 8]])
+
         self.obstacle_indices = None
         self.obstacle_pos_xy = None
 
@@ -69,7 +69,7 @@ class QuadrotorFormationMARL(gym.Env):
 
         if self.n_tank_agents > 1:
             print("WARNING, CENTRALIZED TRAINING CANT HAVE MORE THAN 1 AGENT")
-            self.n_tank_agents = 1
+            self.n_tank_agents = 0
         if self.n_agents > 1:
             print("WARNING, CENTRALIZED TRAINING CANT HAVE MORE THAN 1 AGENT")
             self.n_agents = 1
@@ -81,12 +81,12 @@ class QuadrotorFormationMARL(gym.Env):
         # 4*tank + 6*drone
         if True:
             self.action_space = spaces.Discrete(
-                (4*self.n_tank_agents) * (6*self.n_agents))
+                (6*self.n_agents) + (4*self.n_tank_agents))
 
         # intitialize grid information
-        self.x_lim = 32  # grid x limit
-        self.y_lim = 32  # grid y limit
-        self.z_lim = 8
+        self.x_lim = 40  # grid x limit
+        self.y_lim = 40  # grid y limit
+        self.z_lim = 12
         self.uncertainty_grid = np.ones((self.x_lim, self.y_lim, self.z_lim))
         self.obs_shape = self.x_lim * self.y_lim * self.z_lim + \
             (self.max_drone_agents + self.max_tank_agents +
@@ -104,7 +104,6 @@ class QuadrotorFormationMARL(gym.Env):
         X, Y, Z = np.mgrid[0: self.x_lim: self.grid_res,
                            0: self.y_lim: self.grid_res,
                            0:self.z_lim: self.grid_res]
-
         self.uncertainty_grids = np.vstack(
             (X.flatten(), Y.flatten(), Z.flatten())).T
 
@@ -115,10 +114,16 @@ class QuadrotorFormationMARL(gym.Env):
         self.action_list = []
         for p in itertools.product([0, 1, 2, 3, 4, 5], repeat=1):
             self.action_list.append(p)
+        if self.exploration_learning == True:
+            self.n_bots = 0
+            self.n_tank_bots = 0
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
+
+    # // 6 -> tank move
+    # divmod(scaler, )
 
     def step(self, action):
         if True:
@@ -200,15 +205,15 @@ class QuadrotorFormationMARL(gym.Env):
                     collision_distance = np.linalg.norm(
                         self.quadrotors[agent_ind].state-self.quadrotors[other_agents_ind].state)
 
-                    if (collision_distance <= 5) and self.quadrotors[agent_ind].is_alive and self.quadrotors[other_agents_ind].is_alive:
+                    if (collision_distance <= 3) and self.quadrotors[agent_ind].is_alive and self.quadrotors[other_agents_ind].is_alive:
                         self.quadrotors[agent_ind].is_alive = False
                         self.quadrotors[other_agents_ind].is_alive = False
                         self.quadrotors[agent_ind].state = np.array(
                             [-1, -1, -1])
                         self.quadrotors[other_agents_ind].state = np.array(
                             [-1, -1, -1])
-                        reward_list[agent_ind] -= 300
-                        reward_list[other_agents_ind] -= 300
+                        reward_list[agent_ind] -= 299
+                        reward_list[other_agents_ind] -= 299
 
             if not self.quadrotors[agent_ind].is_alive:
                 reward_list[agent_ind] += 1
@@ -217,8 +222,8 @@ class QuadrotorFormationMARL(gym.Env):
                 for bot_ind in range(self.n_tank_bots):
                     drone_distance = np.linalg.norm(
                         self.quadrotors[agent_ind].state - self.tank_bots[bot_ind].state)
-                    if drone_distance <= 5 and self.tank_bots[bot_ind].is_alive:
-                        reward_list[agent_ind] += 50
+                    if drone_distance <= 3 and self.tank_bots[bot_ind].is_alive:
+                        reward_list[agent_ind] += 51
                         self.tank_bots[bot_ind].is_alive = False
                         self.tank_bots[bot_ind].state = np.array([-1, -1, -1])
                         self.quadrotors[agent_ind].is_alive = False
@@ -227,8 +232,8 @@ class QuadrotorFormationMARL(gym.Env):
                 for bot_ind in range(self.n_bots):
                     drone_distance = np.linalg.norm(
                         self.quadrotors[agent_ind].state-self.bots[bot_ind].state)
-                    if drone_distance <= 5 and self.bots[bot_ind].is_alive:
-                        reward_list[agent_ind] += 50
+                    if drone_distance <= 3 and self.bots[bot_ind].is_alive:
+                        reward_list[agent_ind] += 51
                         self.bots[bot_ind].is_alive = False
                         self.bots[bot_ind].state = np.array([-1, -1, -1])
 
@@ -238,7 +243,7 @@ class QuadrotorFormationMARL(gym.Env):
                     collision_distance = np.linalg.norm(
                         self.tanks[agent_ind].state-self.tanks[other_agents_ind].state)
 
-                    if (collision_distance <= 5) and self.tanks[agent_ind].is_alive and self.tanks[other_agents_ind].is_alive:
+                    if (collision_distance <= 3) and self.tanks[agent_ind].is_alive and self.tanks[other_agents_ind].is_alive:
                         self.tanks[agent_ind].is_alive = False
                         self.tanks[other_agents_ind].is_alive = False
                         self.tanks[agent_ind].state = np.array([-1, -1, -1])
@@ -255,8 +260,8 @@ class QuadrotorFormationMARL(gym.Env):
                     drone_distance = np.linalg.norm(
                         self.tanks[agent_ind].state-self.tank_bots[bot_ind].state)
 
-                    if drone_distance <= 5 and self.tank_bots[bot_ind].is_alive:
-                        tank_reward_list[agent_ind] += 50
+                    if drone_distance <= 3 and self.tank_bots[bot_ind].is_alive:
+                        tank_reward_list[agent_ind] += 51
                         self.tank_bots[bot_ind].is_alive = False
                         self.tank_bots[bot_ind].state = np.array([-1, -1, -1])
 
@@ -299,6 +304,9 @@ class QuadrotorFormationMARL(gym.Env):
         if (not agent and bot_agent) or (not bot_agent and not tank_bot_agent) or (not agent and not tank_agent):
             done = True
 
+        if (self.exploration_learning) and (agent or tank_agent):
+            done = False
+
         if done and bot_agent:
             pass
 
@@ -312,7 +320,8 @@ class QuadrotorFormationMARL(gym.Env):
         if self.exploration_learning == False:
             rewarrd = reward_list[0]+tank_reward_list[0]
         else:
-            reward = np.sum(self.uncertainty_grid)
+            reward = np.sum(
+                (np.ones((self.x_lim, self.y_lim, self.z_lim))-self.uncertainty_grid))
             rewarrd = -reward
 
         self.current_step += 1
