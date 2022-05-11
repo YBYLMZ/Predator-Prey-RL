@@ -17,8 +17,8 @@ font = {'family': 'sans-serif',
 
 class QuadrotorFormationMARL(gym.Env):
 
-    def __init__(self, n_agents=1, n_bots=4,
-                 n_tank_agents=0, n_tank_bots=4,
+    def __init__(self, n_agents=1, n_bots=2,
+                 n_tank_agents=1, n_tank_bots=2,
                  N_frame=5, visualization=True,
                  is_centralized=False, moving_target=True, exploration_learning=False):
 
@@ -57,9 +57,9 @@ class QuadrotorFormationMARL(gym.Env):
         #################################Obstacles#########################
 
         self.obstacle_points = np.array(
-            [[26, 5, 1, 37, 10, 4], [12, 5, 3, 15, 6, 5], [11, 2, 1, 13, 6, 8]])
+            [[21, 5, 1, 26, 10, 2], [12, 5, 3, 15, 6, 5], [0, 2, 5, 3, 6, 8]])
         self.static_obstacle_points = np.array(
-            [[26, 5, 1, 37, 10, 4], [12, 5, 3, 15, 6, 5], [11, 2, 1, 13, 6, 8]])
+            [[0, 5, 1, 1, 8, 4], [20, 0, 0, 23, 3, 2], [16, 2, 1, 18, 5, 4]])
 
         self.obstacle_indices = None
         self.obstacle_pos_xy = None
@@ -84,16 +84,17 @@ class QuadrotorFormationMARL(gym.Env):
                 (6*self.n_agents) + (4*self.n_tank_agents))
 
         # intitialize grid information
-        self.x_lim = 40  # grid x limit
-        self.y_lim = 40  # grid y limit
-        self.z_lim = 12
+        self.x_lim = 24  # grid x limit
+        self.y_lim = 24  # grid y limit
+        self.z_lim = 7
+
         self.uncertainty_grid = np.ones((self.x_lim, self.y_lim, self.z_lim))
         self.obs_shape = self.x_lim * self.y_lim * self.z_lim + \
             (self.max_drone_agents + self.max_tank_agents +
              self.max_drone_bots + self.max_tank_bots)*3
 
         self.observation_space = spaces.Box(low=-255, high=255,
-                                            shape=(40, 3), dtype=np.float32)
+                                            shape=(156, ), dtype=np.float32)
 
         self.lim_values = [self.x_lim, self.y_lim, self.z_lim]
         self.grid_res = 1.0  # resolution for grids
@@ -355,7 +356,10 @@ class QuadrotorFormationMARL(gym.Env):
                     self.tank_bots[agent_ind].state)
 
         observationlist = np.concatenate(
-            [state, tank_state, bot_state, Tank_bot_state])
+            [state, tank_state, bot_state, Tank_bot_state]).flatten()
+        observationlist = np.concatenate(
+            [observationlist, self.obstacle_points.flatten(), self.static_obstacle_points.flatten()]).flatten()
+
         self.observation_space = observationlist
         return observationlist
 
@@ -478,7 +482,7 @@ class QuadrotorFormationMARL(gym.Env):
         else:
             pass
 
-        return np.zeros((40, 3))
+        return np.zeros((156, ))
 
     def get_drone_stack(self, agent_ind):
         drone_closest_grids = self.get_closest_n_grids(
@@ -603,15 +607,15 @@ class QuadrotorFormationMARL(gym.Env):
 
     def obstacle_inside_area(self, obstacle_indice):
         for _ in range(len(self.obstacle_points[obstacle_indice])):
-            if self.obstacle_points[obstacle_indice][0] == -1:
+            if self.obstacle_points[obstacle_indice][0] == 0:
                 self.obstacle_movedirection[obstacle_indice] = 0
             elif self.obstacle_points[obstacle_indice][3] == self.x_lim:
                 self.obstacle_movedirection[obstacle_indice] = 1
-            elif self.obstacle_points[obstacle_indice][1] == -1:
+            elif self.obstacle_points[obstacle_indice][1] == 0:
                 self.obstacle_movedirection[obstacle_indice] = 2
             elif self.obstacle_points[obstacle_indice][4] == self.y_lim:
                 self.obstacle_movedirection[obstacle_indice] = 3
-            elif self.obstacle_points[obstacle_indice][2] == -1:
+            elif self.obstacle_points[obstacle_indice][2] == 0:
                 self.obstacle_movedirection[obstacle_indice] = 4
             elif self.obstacle_points[obstacle_indice][5] == self.z_lim:
                 self.obstacle_movedirection[obstacle_indice] = 5
