@@ -57,9 +57,9 @@ class QuadrotorFormationMARL(gym.Env):
         #################################Obstacles#########################
 
         self.obstacle_points = np.array(
-            [[21, 5, 1, 26, 10, 2], [12, 5, 3, 15, 6, 5], [0, 2, 5, 3, 6, 8]])
+            [[10, 5, 1, 12, 10, 2], [0, 10, 3, 1, 12, 5], [0, 11, 2, 2, 13, 3]])
         self.static_obstacle_points = np.array(
-            [[0, 5, 1, 1, 8, 4], [20, 0, 0, 23, 3, 2], [16, 2, 1, 18, 5, 4]])
+            [[0, 5, 1, 1, 8, 4], [10, 0, 0, 12, 3, 2], [6, 2, 1, 8, 5, 4]])
 
         self.obstacle_indices = None
         self.obstacle_pos_xy = None
@@ -74,19 +74,16 @@ class QuadrotorFormationMARL(gym.Env):
             print("WARNING, CENTRALIZED TRAINING CANT HAVE MORE THAN 1 AGENT")
             self.n_agents = 1
 
-        """
-
-        """
-
+        
         # 4*tank + 6*drone
         if True:
             self.action_space = spaces.Discrete(
                 (6*self.n_agents) + (4*self.n_tank_agents))
 
         # intitialize grid information
-        self.x_lim = 24  # grid x limit
-        self.y_lim = 24  # grid y limit
-        self.z_lim = 7
+        self.x_lim = 13  # grid x limit
+        self.y_lim = 13  # grid y limit
+        self.z_lim = 5
 
         self.uncertainty_grid = np.ones((self.x_lim, self.y_lim, self.z_lim))
         self.obs_shape = self.x_lim * self.y_lim * self.z_lim + \

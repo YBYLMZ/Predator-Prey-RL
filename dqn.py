@@ -1,4 +1,3 @@
-from math import prod
 import os
 import time
 import numpy as np
@@ -17,11 +16,11 @@ QuadrotorFormation = QuadrotorFormationMARL
 
 # os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
-TOTAL_TIMESTEPS = 1000
-CHECKPOINT_FREQ = 50_000
+TOTAL_TIMESTEPS = 50_000_000
+CHECKPOINT_FREQ = 100_000
 N_ENV = 8
-DEMO = True
-
+DEMO = False
+TEST = False
 
 def make_env():
     def _init():
@@ -33,20 +32,25 @@ def make_env():
 
 if __name__ == '__main__':
     # callbacks
-    checkpoint_callback = CheckpointCallback(save_freq=CHECKPOINT_FREQ, save_path='./model_checkpoints/',
-                                             name_prefix='rl_model_dyno_')
+    if not TEST:
+        checkpoint_callback = CheckpointCallback(save_freq=CHECKPOINT_FREQ, save_path='./model_checkpoints/', name_prefix='rl_model_dyno_')
+    else:
+        checkpoint_callback = None
 
     env = QuadrotorFormation(visualization=False, moving_target=True)
 
     model = DQN("MlpPolicy", env,
                 tensorboard_log='./tensorboard_logs_dyno/', batch_size=32,
                 exploration_fraction=0.99,
-                verbose=2, policy_kwargs={"net_arch": [512, 512]})
-
-    model.learn(total_timesteps=TOTAL_TIMESTEPS, log_interval=5,
+                verbose=2, policy_kwargs={"net_arch": [512, 512, 512]})
+    
+    if not TEST:
+        model.learn(total_timesteps=TOTAL_TIMESTEPS, log_interval=5,
                 tb_log_name="dqn_log_dyno", callback=checkpoint_callback)
-    model.save("dqn_predator_dyno")
+        model.save("dqn_predator_dyno")
+        del model
 
+    model.load("dqn_predator_dyno")
     obs = env.reset()
     total_rew = 0
     rews = []
@@ -83,8 +87,8 @@ if __name__ == '__main__':
             RESOLUTION = 5
             # obstacles
 
+            # OpTiMiZe
             from itertools import product
-
             for obs_point in env.obstacle_points:
                 x1, y1, z1, x2, y2, z2 = obs_point
                 zex = np.linspace(z1, z2, RESOLUTION)
